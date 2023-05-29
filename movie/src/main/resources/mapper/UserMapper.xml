@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--namespace: indicate which interface this mapper file maps to -->
+<mapper namespace="com.example.movie.mapper.UserMapper">
+
+<!-- Use resultMap for mapping between columns and field in the class that have different names
+        id: id for the resultMap
+        type: a class in Java that being mapped to-->
+    <resultMap id="userResultMap" type="com.example.movie.model.User">
+        <id property="id" column="user_id" />  <!-- primary key must be written out explicitly-->
+        <result property="username" column="username" />
+        <result property="email" column="email" />
+        <result property="idToken" column="idToken" />
+        <result property="joinedDate" column="joined_date" />
+        <result property="toWatchCount" column="to_watch_count" />
+        <result property="totalWatchedCount" column="total_watched_count" />
+    </resultMap>
+<!--    resultType: 表示查询结果集的类型，需要指定对应映射类的类型
+        resultMap: when table's field has different name from the class's field, need to identify manually-->
+    <select id="findByEmail" resultMap="userResultMap" parameterType="java.lang.String">
+        SELECT * FROM user WHERE email = #{email}
+    </select>
+
+    <select id="findById" resultMap="userResultMap" parameterType="java.lang.Long">
+        SELECT * FROM user WHERE user_id = #{id}
+    </select>
+
+    <!--    id points to the corresponding method in the interface
+            keyProperty: a field in the 'User' class that will accept the automatically generated key value by MyBatis-->
+    <insert id="insert" parameterType="com.example.movie.model.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (username, email, idToken, joined_date, to_watch_count, total_watched_count)
+        VALUES (#{username}, #{email}, #{idToken}, #{joinedDate}, #{toWatchCount}, #{totalWatchedCount})
+    </insert>
+
+    <update id="update" parameterType="com.example.movie.model.User">
+        UPDATE user SET
+        username = #{username},
+        email = #{email},
+        idToken = #{idToken},
+        joined_date = #{joinedDate},
+        to_watch_count = #{toWatchCount},
+        total_watched_count = #{totalWatchedCount}
+        WHERE user_id = #{id}
+    </update>
+
+</mapper>

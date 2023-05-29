@@ -1,0 +1,7 @@
+runtime: java17
+instance_class: F1
+#env_variables:
+#  SPRING_PROFILES_ACTIVE: "gcp,mysql"
+handlers:
+  - url: /.*
+    script: auto

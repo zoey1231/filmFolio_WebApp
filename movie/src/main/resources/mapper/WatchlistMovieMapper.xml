@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--namespace: indicate which interface this mapper file maps to -->
+<mapper namespace="com.example.movie.mapper.WatchlistMovieMapper">
+    <!-- Use resultMap for mapping between columns and field in the class that have different names
+        id: id for the resultMap
+        type: a class in Java that being mapped to-->
+    <resultMap id="WatchedMovieDTOResultMap" type="com.example.movie.model.WatchedMovieDTO">
+        <result property="id" column="movie_id"/>
+        <result property="imdbId" column="imdb_id"/>
+        <result property="tmdbId" column="tmdb_id"/>
+    </resultMap>
+
+    <resultMap id="movieResultMap" type="com.example.movie.model.Movie">
+        <result property="id" column="movie_id"/>
+        <result property="imdbId" column="imdb_id"/>
+        <result property="tmdbId" column="tmdb_id"/>
+    </resultMap>
+
+
+    <resultMap id="MovieInWatchlistResultMap" type="com.example.movie.model.MovieInWatchlist">
+        <id property="id.movieId" column="movie_id"/>
+        <id property="id.watchlistId" column="watchlist_id"/>
+        <result property="watched" column="watched"/>
+        <result property="watchedDate" column="watched_date"/>
+        <result property="rating" column="rating"/>
+        <result property="comment" column="comment"/>
+        <result property="modificationDate" column="modification_date"/>
+    </resultMap>
+
+
+    <resultMap id="watchlistResultMap" type="com.example.movie.model.Watchlist">
+        <id column="watchlist_id" property="id" />
+        <result column="name" property="name" />
+        <result column="creation_date" property="creationDate" />
+        <result column="modification_date" property="modificationDate" />
+        <association property="user" javaType="com.example.movie.model.User">
+            <id column="user_id" property="id" />
+            <result column="joined_date" property="joinedDate" />
+            <result column="to_watch_count" property="toWatchCount" />
+            <result column="total_watched_count" property="totalWatchedCount" />
+        </association>
+    </resultMap>
+    <!--    id points to the corresponding method in the interface
+            keyProperty: a field in the 'User' class that will accept the automatically generated key value by MyBatis-->
+    <insert id="addWatchlist" parameterType="com.example.movie.model.Watchlist" useGeneratedKeys="true" keyProperty="id" >
+        INSERT INTO watchlist(user_id, name, creation_date, modification_date)
+        VALUES(#{user.id}, #{name}, #{creationDate}, #{modificationDate})
+    </insert>
+
+
+
+    <update id="updateWatchlistName">
+        UPDATE watchlist SET name = #{name} WHERE watchlist_id = #{watchlistId}
+    </update>
+
+    <delete id="deleteWatchlist" parameterType="Long">
+        DELETE FROM watchlist WHERE watchlist_id = #{watchlistId}
+    </delete>
+
+    <select id="findWatchlistById" parameterType="Long" resultMap="watchlistResultMap">
+        SELECT * FROM watchlist WHERE watchlist_id = #{watchlistId}
+    </select>
+    <select id="findWatchlistByUserIdnName" resultMap="watchlistResultMap">
+        SELECT * FROM watchlist WHERE user_id = #{userId} AND name = #{name}
+    </select>
+
+    <select id="findWatchlistsByUserId" parameterType="Long" resultMap="watchlistResultMap">
+        SELECT * FROM watchlist WHERE user_id = #{userId}
+    </select>
+    <select id="countWatchlistsByUserId" parameterType="Long" resultType="Integer">
+        SELECT COUNT(*) FROM watchlist WHERE user_id = #{userId}
+    </select>
+
+    <select id="findWatchedMoviesInWatchlist" resultMap="WatchedMovieDTOResultMap">
+        SELECT
+<!--        m.movie_id,-->
+<!--        m.name,-->
+<!--        m.year,-->
+<!--        m.genre,-->
+<!--        m.imdb_id,-->
+<!--        m.tmdb_id,-->
+        m.*,
+        miw.watched_date AS watchedDate,
+        miw.rating,
+        miw.comment
+        FROM
+        movie m
+        JOIN movieinwatchlist miw ON miw.movie_id = m.movie_id
+        JOIN watchlist w ON w.watchlist_id = miw.watchlist_id
+        WHERE
+        w.watchlist_id = #{watchlistId}
+        AND miw.watched = true
+    </select>
+
+    <select id="findUnwatchedMoviesInWatchlist" resultMap="movieResultMap">
+        SELECT m.* FROM movie m
+        LEFT JOIN movieinwatchlist miw ON m.movie_id=miw.movie_id
+        WHERE miw.watched=false AND miw.watchlist_id=#{watchlistId}
+    </select>
+
+    <select id="findAllMoviesInWatchlist" resultMap="MovieInWatchlistResultMap">
+        SELECT miw.* FROM movieinwatchlist miw
+        WHERE miw.watchlist_id=#{watchlistId}
+    </select>
+
+    <select id="countMoviesInWatchlist" parameterType="Long" resultType="Integer">
+        SELECT COUNT(*) FROM movieinwatchlist WHERE watchlist_id=#{watchlistId}
+    </select>
+
+    <insert id="addMovieToWatchlist" parameterType="com.example.movie.model.MovieInWatchlist" >
+        INSERT INTO movieinwatchlist (watchlist_id, movie_id, watched, watched_date, rating, comment, modification_date)
+        VALUES (#{id.watchlistId}, #{id.movieId}, #{watched}, #{watchedDate}, #{rating}, #{comment}, #{modificationDate})
+    </insert>
+
+    <update id="updateMovieInWatchlist" parameterType="com.example.movie.model.MovieInWatchlist">
+        UPDATE movieinwatchlist SET watched=#{watched}, watched_date=#{watchedDate},
+        rating=#{rating}, comment=#{comment}, modification_date=#{modificationDate}
+        WHERE movie_id=#{id.movieId} AND watchlist_id=#{id.watchlistId}
+    </update>
+
+    <delete id="deleteMovieInWatchlist" parameterType="com.example.movie.model.MovieInWatchlistId">
+    DELETE FROM movieinwatchlist WHERE movie_id=#{movieId} AND watchlist_id=#{watchlistId}
+    </delete>
+    <select id="countWatchedMoviesByUserId" parameterType="Long" resultType="Integer">
+        SELECT COUNT(*) FROM movieinwatchlist miw
+        JOIN watchlist w ON w.watchlist_id = miw.watchlist_id
+        WHERE w.user_id = #{userId} AND miw.watched = true
+    </select>
+    <select id="countUnwatchedMoviesByUserId" parameterType="Long" resultType="Integer">
+        SELECT COUNT(*) FROM movieinwatchlist miw
+        JOIN watchlist w ON w.watchlist_id = miw.watchlist_id
+        WHERE w.user_id = #{userId} AND miw.watched = false
+    </select>
+
+</mapper>

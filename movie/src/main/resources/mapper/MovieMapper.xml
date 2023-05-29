@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--namespace: indicate which interface this mapper file maps to -->
+<mapper namespace="com.example.movie.mapper.MovieMapper">
+
+<!-- Use resultMap for mapping between columns and field in the class that have different names
+        id: id for the resultMap
+        type: a class in Java that being mapped to-->
+    <resultMap id="movieResultMap" type="com.example.movie.model.Movie">
+        <id property="id" column="movie_id" />  <!-- primary key must be written out explicitly-->
+        <result property="name" column="name" />
+        <result property="year" column="year" />
+        <result property="genre" column="genre" />
+        <result property="imdbId" column="imdb_id"/>
+        <result property="tmdbId" column="tmdb_id"/>
+    </resultMap>
+    <resultMap id="TmdbMovieResultMap" type="com.example.movie.model.TmdbMovie">
+        <id property="id" column="tmdb_id" />
+        <result property="popularity" column="popularity" />
+    </resultMap>
+<!--    resultType: 表示查询结果集的类型，需要指定对应映射类的类型
+        resultMap: when table's field has different name from the class's field, need to identify manually-->
+    <select id="findByName" resultMap="movieResultMap" parameterType="java.lang.String">
+        SELECT * FROM movie WHERE name = #{name}
+    </select>
+
+    <select id="findById" resultMap="movieResultMap" parameterType="java.lang.Long">
+        SELECT * FROM movie WHERE movie_id = #{id}
+    </select>
+    <select id="findByTmdbId" resultMap="movieResultMap" parameterType="java.lang.Long">
+        SELECT * FROM movie WHERE tmdb_id = #{tmdbId}
+    </select>
+
+
+    <!--    id points to the corresponding method in the interface
+            keyProperty: a field in the 'User' class that will accept the automatically generated key value by MyBatis-->
+    <insert id="insert" parameterType="com.example.movie.model.Movie" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO movie (name, year, genre, imdb_id, tmdb_id)
+        VALUES (#{name}, #{year}, #{genre}, #{imdbId}, #{tmdbId})
+    </insert>
+
+    <update id="update" parameterType="com.example.movie.model.Movie">
+        UPDATE movie SET
+        name = #{name},
+        year = #{year},
+        genre = #{genre},
+        imdb_id = #{imdbId},
+        tmdb_id = #{tmdbId}
+        WHERE movie_id = #{id}
+    </update>
+
+    <select id="search" parameterType="java.lang.String" resultMap="movieResultMap">
+        SELECT * FROM movie WHERE name LIKE CONCAT('%', #{searchTerm}, '%') OR
+        CAST(year AS CHAR) LIKE CONCAT('%', #{searchTerm}, '%') OR
+        genre LIKE CONCAT('%', #{searchTerm}, '%') OR
+        CAST(imdb_id AS CHAR) LIKE CONCAT('%', #{searchTerm}, '%') OR
+        CAST(tmdb_id AS CHAR) LIKE CONCAT('%', #{searchTerm}, '%')
+    </select>
+    <select id="getAllMovies" resultMap="movieResultMap">
+        SELECT * FROM movie
+    </select>
+    <insert id="addTmdbMovie" parameterType="com.example.movie.model.TmdbMovie">
+        INSERT INTO tmdb_movie (tmdb_id, popularity)
+        VALUES (#{id}, #{popularity})
+    </insert>
+    <select id="findTmdbMovieById" parameterType="java.lang.Long" resultType="com.example.movie.model.TmdbMovie">
+        SELECT * FROM tmdb_movie WHERE tmdb_id = #{id}
+    </select>
+    <select id="findTopOrderByPopularityDesc" parameterType="java.lang.Integer" resultMap="TmdbMovieResultMap">
+        SELECT * FROM tmdb_movie
+        ORDER BY popularity DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>
